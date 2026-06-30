@@ -1,0 +1,8 @@
+# Runtime
+# Tkinter 属于 Python 标准库，不需要写入依赖。
+Pillow==12.2.0
+
+# Packaging
+nuitka==4.1.1
+ordered-set==4.1.0
+zstandard==0.25.0
