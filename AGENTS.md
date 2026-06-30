@@ -2,7 +2,7 @@
 
 ## 项目定位
 
-- 本项目是 Python/Tkinter 桌面小游戏 `V家翻转棋`。
+- 本项目仓库名为 `VsingerReversi`，是 Python/Tkinter 桌面小游戏。
 - 当前结构为核心规则、Tkinter 桌面窗口和 Nuitka 打包脚本。
 - 当前支持单人、双人、联机骨架三种模式。
 - 用户可见名称为 `V家翻转棋`，先手显示为 `言和棋`，后手显示为 `天依棋`。
@@ -26,6 +26,7 @@
 & "C:\Users\admin\.conda\envs\envs2\python.exe" -m py_compile .\core.py .\tk_ui.py .\tk_run.py .\reversi.py
 & "C:\Users\admin\.conda\envs\envs2\python.exe" .\tk_run.py --self-check-imports
 $null = [scriptblock]::Create((Get-Content -Raw .\build_nuitka.ps1 -Encoding utf8))
+$null = [scriptblock]::Create((Get-Content -Raw .\build_nuitka.ps1))
 ```
 
 ## 开发边界

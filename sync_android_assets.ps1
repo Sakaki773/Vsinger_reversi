@@ -8,7 +8,7 @@ $sourceDir = Join-Path $ProjectRoot "pic"
 $targetDir = Join-Path $ProjectRoot "android\app\src\main\res\drawable-nodpi"
 
 if (-not (Test-Path $sourceDir)) {
-    throw "未找到素材目录：$sourceDir"
+    throw "Asset directory not found: $sourceDir"
 }
 
 New-Item -ItemType Directory -Force $targetDir | Out-Null
@@ -23,7 +23,7 @@ foreach ($asset in $assets) {
     $source = Join-Path $sourceDir $asset.Source
     $target = Join-Path $targetDir $asset.Target
     if (-not (Test-Path $source)) {
-        throw "未找到素材文件：$source"
+        throw "Asset file not found: $source"
     }
     Copy-Item -Force $source $target
     Write-Host "Synced $($asset.Source) -> android/app/src/main/res/drawable-nodpi/$($asset.Target)"

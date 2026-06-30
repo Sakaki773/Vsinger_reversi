@@ -1,6 +1,6 @@
-# V家翻转棋 Android 工程
+# VsingerReversi Android 工程
 
-这是 `V家翻转棋` 的原生 Android 工程骨架，使用 Kotlin + Jetpack Compose。
+这是 `VsingerReversi` 的原生 Android 工程骨架，使用 Kotlin + Jetpack Compose。用户可见名称为 `V家翻转棋`。
 
 ## 关系边界
 
@@ -16,6 +16,14 @@
 
 ## 命令行构建
 
+首次命令行构建前，可在仓库根目录执行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\setup_android_tools.ps1
+```
+
+该脚本会在 `.android-tools/` 下准备本地 JDK、Gradle 和 Android SDK，不修改 Python `envs2`。
+
 在仓库根目录执行：
 
 ```powershell
@@ -28,7 +36,14 @@ powershell -ExecutionPolicy Bypass -File .\build_android.ps1
 android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-如果本目录没有 `gradlew.bat`，脚本会尝试使用系统 `gradle` 命令。首次开发建议优先用 Android Studio 打开工程。
+如果本目录没有 `gradlew.bat`，脚本会优先使用仓库根目录 `.android-tools/gradle/bin/gradle.bat`，再尝试系统 `gradle` 命令。首次开发也可以用 Android Studio 打开工程。
+
+如果命令提示缺少 `android/gradlew.bat` 或系统 `gradle`：
+
+- 在仓库根目录运行 `setup_android_tools.ps1`。
+- 或用 Android Studio 打开本目录并完成 Gradle Sync。
+- 或安装 Gradle，并确认 `gradle -v` 可以运行。
+- Python 的 `envs2` 环境不参与 Android 构建。
 
 ## 素材同步
 

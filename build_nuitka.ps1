@@ -10,10 +10,15 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Keep this script ASCII-only so Windows PowerShell 5.1 can parse it without a UTF-8 BOM.
 $ProjectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $BuildRoot = Join-Path $env:TEMP "VsingerReversi_nuitka"
 $StageDir = Join-Path $BuildRoot "source"
 $EntryScript = Join-Path $StageDir "tk_run.py"
+
+if ($ProjectRoot -cmatch '[^\x00-\x7F]') {
+    throw "Project path contains non-ASCII characters. Rename or move the project to an English-only path before Nuitka build: $ProjectRoot"
+}
 
 if ([System.IO.Path]::IsPathRooted($OutputDir)) {
     $ResolvedOutputDir = $OutputDir
@@ -22,7 +27,7 @@ if ([System.IO.Path]::IsPathRooted($OutputDir)) {
 }
 
 if (-not (Test-Path -LiteralPath $PythonExe)) {
-    throw "找不到 Python 解释器：$PythonExe"
+    throw "Python executable not found: $PythonExe"
 }
 
 if (Test-Path -LiteralPath $BuildRoot) {
@@ -49,7 +54,7 @@ if (Test-Path -LiteralPath $picSource) {
 
 & $PythonExe $EntryScript --self-check-imports
 if ($LASTEXITCODE -ne 0) {
-    throw "Tkinter 导入自检失败。"
+    throw "Tkinter import self-check failed."
 }
 
 $consoleMode = "disable"
@@ -90,7 +95,7 @@ $nuitkaArgs += $EntryScript
 
 & $PythonExe @nuitkaArgs
 if ($LASTEXITCODE -ne 0) {
-    throw "Nuitka 打包失败。"
+    throw "Nuitka build failed."
 }
 
 if (-not $SkipStartupSelfCheck) {
@@ -99,8 +104,8 @@ if (-not $SkipStartupSelfCheck) {
         $exePath = Join-Path $ResolvedOutputDir "VsingerReversi.exe"
     }
     if (Test-Path -LiteralPath $exePath) {
-        Write-Host "已生成：$exePath"
+        Write-Host "Generated: $exePath"
     } else {
-        Write-Host "打包完成，但未在预期位置找到 EXE：$exePath"
+        Write-Host "Build finished, but EXE was not found at expected path: $exePath"
     }
 }

@@ -2,7 +2,8 @@
 
 ## 项目说明
 
-- 项目名称：V家翻转棋
+- 项目名称：VsingerReversi
+- 用户可见名称：V家翻转棋
 - 项目类型：Python/Tkinter 桌面小游戏，附 Nuitka 打包脚本
 - 桌面入口：`tk_run.py`
 - 兼容入口：`reversi.py`

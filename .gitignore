@@ -19,12 +19,25 @@ htmlcov/
 # Build output
 dist/
 build/
+**/build/
 *.egg-info/
 *.build/
 *.dist/
 *.onefile-build/
 .nuitka_staging/
 nuitka-crash-report.xml
+
+# Android
+.android-tools/
+.gradle/
+**/.gradle/
+local.properties
+**/local.properties
+*.apk
+*.aab
+*.ap_
+captures/
+**/.cxx/
 
 # Logs and temp
 *.log

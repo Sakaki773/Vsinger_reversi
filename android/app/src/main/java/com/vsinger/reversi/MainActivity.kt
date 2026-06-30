@@ -118,6 +118,7 @@ fun VsingerReversiApp() {
             game.current = opponent(game.current)
             statusNote = "${skipped.label}无子可下，自动跳过。"
             refresh()
+            showResultIfFinished()
             return true
         }
         return false
