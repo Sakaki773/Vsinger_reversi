@@ -10,6 +10,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,9 +18,10 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,6 +53,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
@@ -98,10 +101,20 @@ fun VsingerReversiApp() {
             return false
         }
         val (black, white) = game.count()
-        val result = when {
-            black > white -> "${Piece.BLACK.label}获胜"
-            white > black -> "${Piece.WHITE.label}获胜"
-            else -> "平局"
+        val winningPiece = when {
+            black > white -> Piece.BLACK
+            white > black -> Piece.WHITE
+            else -> null
+        }
+        val pieceResult = winningPiece?.let { "${it.label}获胜" } ?: "平局"
+        val result = if (mode == GameMode.SINGLE) {
+            when (winningPiece) {
+                null -> "平局"
+                playerPiece -> "你赢了，${winningPiece.label}获胜"
+                else -> "电脑赢了，${winningPiece.label}获胜"
+            }
+        } else {
+            pieceResult
         }
         statusNote = "游戏结束：$result"
         resultMessage = "$result\n${Piece.BLACK.label} $black : ${Piece.WHITE.label} $white"
@@ -151,102 +164,121 @@ fun VsingerReversiApp() {
         modifier = Modifier.fillMaxSize(),
         color = Color(0xFFF5F8F5),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(14.dp),
-        ) {
-            Text(
-                text = "V家翻转棋",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF20342E),
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = status,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF223A34),
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = "${Piece.BLACK.label} $black  :  ${Piece.WHITE.label} $white",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF3D4D49),
-            )
-            if (networkMessage.isNotEmpty()) {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = maxHeight)
+                    .verticalScroll(rememberScrollState())
+                    .padding(14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = "V家翻转棋",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF20342E),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = status,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF223A34),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = networkMessage,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF687470),
+                    text = "${Piece.BLACK.label} $black  :  ${Piece.WHITE.label} $white",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF3D4D49),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
                 )
-            }
+                Spacer(Modifier.height(6.dp))
+                PieceLegend()
+                if (networkMessage.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = networkMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF687470),
+                    )
+                }
 
-            Spacer(Modifier.height(12.dp))
-            ControlRows(
-                mode = mode,
-                boardSize = boardSize,
-                playerPiece = playerPiece,
-                difficulty = difficulty,
-                onModeChange = {
-                    mode = it
-                    game.reset(boardSize)
-                    if (mode == GameMode.NETWORK) {
-                        network.configureLocalPiece(playerPiece)
-                        networkMessage = network.lastMessage
-                        statusNote = "联机模式骨架：已记录我方选棋，尚未同步远端落子。"
-                    } else {
-                        networkMessage = ""
-                        statusNote = null
-                    }
-                    resultMessage = null
-                    refresh()
-                },
-                onBoardSizeChange = {
-                    boardSize = it
-                    restart()
-                },
-                onPlayerPieceChange = {
-                    playerPiece = it
-                    game.reset(boardSize)
-                    if (mode == GameMode.NETWORK) {
-                        network.configureLocalPiece(playerPiece)
-                        networkMessage = network.lastMessage
-                    }
-                    statusNote = null
-                    resultMessage = null
-                    refresh()
-                },
-                onDifficultyChange = { difficulty = it },
-                onRestart = { restart() },
-            )
-
-            Spacer(Modifier.height(12.dp))
-            ReversiBoard(
-                game = game,
-                legalMoves = currentMoves.keys,
-                onCellClick = { row, col ->
-                    if (shouldAiMove()) {
-                        return@ReversiBoard
-                    }
-                    if (mode == GameMode.SINGLE && game.current != playerPiece) {
-                        return@ReversiBoard
-                    }
-                    val player = game.current
-                    if (game.place(row, col)) {
+                Spacer(Modifier.height(12.dp))
+                ControlRows(
+                    mode = mode,
+                    boardSize = boardSize,
+                    playerPiece = playerPiece,
+                    difficulty = difficulty,
+                    onModeChange = {
+                        mode = it
+                        game.reset(boardSize)
                         if (mode == GameMode.NETWORK) {
-                            network.sendMove(row, col, player)
+                            network.configureLocalPiece(playerPiece)
+                            networkMessage = network.lastMessage
+                            statusNote = "联机模式骨架：已记录我方选棋，尚未同步远端落子。"
+                        } else {
+                            networkMessage = ""
+                            statusNote = null
+                        }
+                        resultMessage = null
+                        refresh()
+                    },
+                    onBoardSizeChange = {
+                        boardSize = it
+                        restart()
+                    },
+                    onPlayerPieceChange = {
+                        playerPiece = it
+                        game.reset(boardSize)
+                        if (mode == GameMode.NETWORK) {
+                            network.configureLocalPiece(playerPiece)
                             networkMessage = network.lastMessage
                         }
                         statusNote = null
+                        resultMessage = null
                         refresh()
-                        handleFinishedOrPass()
-                    }
-                },
-            )
+                    },
+                    onDifficultyChange = { difficulty = it },
+                    onRestart = { restart() },
+                    modifier = Modifier
+                        .widthIn(max = 520.dp)
+                        .fillMaxWidth(),
+                )
+
+                Spacer(Modifier.height(12.dp))
+                ReversiBoard(
+                    game = game,
+                    legalMoves = currentMoves.keys,
+                    onCellClick = { row, col ->
+                        if (shouldAiMove()) {
+                            return@ReversiBoard
+                        }
+                        if (mode == GameMode.SINGLE && game.current != playerPiece) {
+                            return@ReversiBoard
+                        }
+                        val player = game.current
+                        if (game.place(row, col)) {
+                            if (mode == GameMode.NETWORK) {
+                                network.sendMove(row, col, player)
+                                networkMessage = network.lastMessage
+                            }
+                            statusNote = null
+                            refresh()
+                            handleFinishedOrPass()
+                        }
+                    },
+                    modifier = Modifier
+                        .widthIn(max = 560.dp)
+                        .fillMaxWidth(),
+                )
+            }
         }
     }
 
@@ -265,6 +297,48 @@ fun VsingerReversiApp() {
 }
 
 @Composable
+private fun PieceLegend() {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        PieceLegendItem(
+            imageRes = R.drawable.qizi0,
+            text = "= ${Piece.WHITE.label}",
+        )
+        PieceLegendItem(
+            imageRes = R.drawable.qizi1,
+            text = "= ${Piece.BLACK.label}",
+        )
+    }
+}
+
+@Composable
+private fun PieceLegendItem(imageRes: Int, text: String, modifier: Modifier = Modifier) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = modifier,
+    ) {
+        Image(
+            painter = painterResource(imageRes),
+            contentDescription = text,
+            modifier = Modifier
+                .size(28.dp)
+                .aspectRatio(1f),
+        )
+        Text(
+            text = text,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.labelMedium,
+            color = Color(0xFF3D4D49),
+        )
+    }
+}
+
+@Composable
 private fun ControlRows(
     mode: GameMode,
     boardSize: Int,
@@ -275,8 +349,9 @@ private fun ControlRows(
     onPlayerPieceChange: (Piece) -> Unit,
     onDifficultyChange: (Difficulty) -> Unit,
     onRestart: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = modifier) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             OptionButton("模式", mode.label, GameMode.entries, { it.label }, onModeChange, Modifier.weight(1f))
             OptionButton("棋盘", "${boardSize} x $boardSize", BOARD_SIZE_OPTIONS, { "$it x $it" }, onBoardSizeChange, Modifier.weight(1f))
@@ -338,10 +413,10 @@ private fun ReversiBoard(
     game: ReversiGame,
     legalMoves: Set<Coord>,
     onCellClick: (Int, Int) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(6.dp))
             .background(Color(0xFFEAF5EE)),
@@ -392,7 +467,7 @@ private fun BoardCell(piece: Piece, isHint: Boolean, modifier: Modifier = Modifi
                 drawPieceBase(piece)
             }
             Image(
-                painter = painterResource(if (piece == Piece.BLACK) R.drawable.qizi0 else R.drawable.qizi1),
+                painter = painterResource(if (piece == Piece.BLACK) R.drawable.qizi1 else R.drawable.qizi0),
                 contentDescription = piece.label,
                 modifier = Modifier
                     .fillMaxSize(0.82f)

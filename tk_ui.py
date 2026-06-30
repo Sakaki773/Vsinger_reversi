@@ -27,11 +27,12 @@ from core import (
 PROJECT_ROOT = Path(__file__).resolve().parent
 PIC_DIR = PROJECT_ROOT / "pic"
 BACKGROUND_PATH = PIC_DIR / "background.png"
-BLACK_PIECE_PATH = PIC_DIR / "qizi0.png"
-WHITE_PIECE_PATH = PIC_DIR / "qizi1.png"
+BLACK_PIECE_PATH = PIC_DIR / "qizi1.png"
+WHITE_PIECE_PATH = PIC_DIR / "qizi0.png"
 BACKGROUND_FADE = 0.58
 BOARD_PIXELS = 512
 MIN_BOARD_PIXELS = 420
+LEGEND_ICON_PIXELS = 28
 
 
 class ReversiApp(tk.Tk):
@@ -54,10 +55,12 @@ class ReversiApp(tk.Tk):
         self.background_source = None
         self.piece_images = {}
         self.piece_image_size = None
+        self.legend_images = {}
         self.last_canvas_size = None
 
         self._load_background()
         self._load_piece_assets()
+        self._load_legend_assets()
         self._build_ui()
         self._apply_dynamic_min_size()
         self._draw_board()
@@ -106,6 +109,13 @@ class ReversiApp(tk.Tk):
                 image = Image.open(path).resize((piece_size, piece_size), Image.LANCZOS)
                 self.piece_images[piece] = ImageTk.PhotoImage(image)
 
+    def _load_legend_assets(self):
+        self.legend_images = {}
+        for piece, path in {self.game.opponent(BLACK): WHITE_PIECE_PATH, BLACK: BLACK_PIECE_PATH}.items():
+            if path.exists():
+                image = Image.open(path).resize((LEGEND_ICON_PIXELS, LEGEND_ICON_PIXELS), Image.LANCZOS)
+                self.legend_images[piece] = ImageTk.PhotoImage(image)
+
     def _build_ui(self):
         main = ttk.Frame(self, padding=14)
         main.grid(row=0, column=0, sticky="nsew")
@@ -126,12 +136,25 @@ class ReversiApp(tk.Tk):
             row=1, column=0, sticky="w", pady=(4, 0)
         )
         ttk.Label(self.top_bar, textvariable=self.score_var).grid(row=2, column=0, sticky="w", pady=(4, 0))
+        self.legend_frame = ttk.Frame(self.top_bar)
+        self.legend_frame.grid(row=3, column=0, sticky="w", pady=(5, 0))
+        legend_items = (
+            self.game.opponent(BLACK),
+            BLACK,
+        )
+        for column, piece in enumerate(legend_items):
+            ttk.Label(
+                self.legend_frame,
+                image=self.legend_images.get(piece),
+                text=f" = {PIECE_TEXT[piece]}",
+                compound="left",
+            ).grid(row=0, column=column, sticky="w", padx=(0, 16))
         ttk.Label(self.top_bar, textvariable=self.network_var, foreground="#666666").grid(
-            row=3, column=0, sticky="w", pady=(4, 0)
+            row=4, column=0, sticky="w", pady=(4, 0)
         )
 
         controls = ttk.Frame(self.top_bar)
-        controls.grid(row=0, column=1, rowspan=4, sticky="e", padx=(24, 0))
+        controls.grid(row=0, column=1, rowspan=5, sticky="e", padx=(24, 0))
         self._add_combo(controls, "模式", self.mode_var, list(GAME_MODE_TEXT.values()), 0, 12, self._after_mode_change)
         self._add_combo(
             controls,
@@ -416,11 +439,23 @@ class ReversiApp(tk.Tk):
         self._draw_board()
         black, white = self.game.count()
         if black > white:
-            result = f"{PIECE_TEXT[BLACK]}获胜"
+            winning_piece = BLACK
+            piece_result = f"{PIECE_TEXT[BLACK]}获胜"
         elif white > black:
-            result = f"{PIECE_TEXT[self.game.opponent(BLACK)]}获胜"
+            winning_piece = self.game.opponent(BLACK)
+            piece_result = f"{PIECE_TEXT[winning_piece]}获胜"
         else:
-            result = "平局"
+            winning_piece = None
+            piece_result = "平局"
+        if self._current_mode() == GAME_MODE_SINGLE:
+            if winning_piece is None:
+                result = "平局"
+            elif winning_piece == self._player_piece():
+                result = f"你赢了，{PIECE_TEXT[winning_piece]}获胜"
+            else:
+                result = f"电脑赢了，{PIECE_TEXT[winning_piece]}获胜"
+        else:
+            result = piece_result
         self.status_var.set(f"游戏结束：{result}")
         self.score_var.set(f"{PIECE_TEXT[BLACK]} {black}  :  {PIECE_TEXT[self.game.opponent(BLACK)]} {white}")
         messagebox.showinfo("游戏结束", f"{result}\n{PIECE_TEXT[BLACK]} {black} : {PIECE_TEXT[self.game.opponent(BLACK)]} {white}")

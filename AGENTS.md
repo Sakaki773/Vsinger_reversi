@@ -15,8 +15,8 @@
 - `reversi.py`：兼容入口，转发到 `tk_run.py`。
 - `build_nuitka.ps1`：Nuitka 打包脚本。
 - `pic/background.png`：棋盘背景。
-- `pic/qizi0.png`：言和棋素材。
-- `pic/qizi1.png`：天依棋素材。
+- `pic/qizi0.png`：天依棋素材。
+- `pic/qizi1.png`：言和棋素材。
 - `requirements.txt`：Pillow 和 Nuitka 打包依赖。
 
 ## 运行与验证
